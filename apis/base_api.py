@@ -1,6 +1,7 @@
 __author__ = 'dmadden'
 from configparser import ConfigParser
 import requests
+from os.path import dirname, abspath
 
 class RateLimitException(Exception):
     pass
@@ -15,7 +16,8 @@ class Base:
 
     def read_config(self, api):
         c = ConfigParser()
-        c.read("config.txt")
+        path = dirname(abspath(__file__)) + "/../" + "config.txt"
+        c.read(path)
         self.api_key = c.get(api, "api_key")
         self.api_secret = c.get(api, "secret_key")
         self.api_endpoint = c.get(api, "endpoint")

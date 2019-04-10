@@ -2,21 +2,39 @@ __author__ = 'dmadden'
 from datetime import datetime
 from .utils import convert_millis_to_seconds
 
+def get_kline_from_json(json):
+    return Kline(convert_millis_to_seconds(json[0]),
+                 json[1],
+                 json[2],
+                 json[3],
+                 json[4],
+                 json[5],
+                 convert_millis_to_seconds(json[6]),
+                 json[7],
+                 json[8],
+                 json[9],
+                 json[10])
+
+def get_klines_from_json(json):
+    return [Kline(k_json) for k_json in json]
+
 
 class Kline:
 
-    def __init__(self, data):
-        self.open_time = int(convert_millis_to_seconds(int(data[0])))
-        self.open = data[1]
-        self.high = data[2]
-        self.low = data[3]
-        self.close = data[4]
-        self.volume = data[5]
-        self.close_time = int(convert_millis_to_seconds(int(data[6])))
-        self.quote_asset_volume = data[7]
-        self.number_of_trades = data[8]
-        self.taker_buy_base_asset_volume = data[9]
-        self.taker_buy_quote_asset_volume = data[10]
+    def __init__(self, open_time, open, high, low, close, volume,
+                 close_time, quote_asset_volume, number_of_trades,
+                 taker_buy_base_asset_volume, taker_buy_quote_asset_volume):
+        self.open_time = open_time
+        self.open = open
+        self.high = high
+        self.low = low
+        self.close = close
+        self.volume = volume
+        self.close_time = close_time
+        self.quote_asset_volume = quote_asset_volume
+        self.number_of_trades = number_of_trades
+        self.taker_buy_base_asset_volume = taker_buy_base_asset_volume
+        self.taker_buy_quote_asset_volume = taker_buy_quote_asset_volume
 
     def __repr__(self):
         breaker = "==============================\n"

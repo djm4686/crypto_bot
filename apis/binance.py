@@ -1,7 +1,10 @@
 __author__ = 'dmadden'
 from .base_api import Base
-from utils import get_current_time
-from .binance_objects.kline import Kline
+from utils import get_current_time, get_timestamp_millis
+from .binance_objects.kline import get_klines_from_json, convert_millis_to_seconds
+from .binance_objects.exchange_info import get_exchange_info_from_json
+from .binance_objects.aggregate_trade import get_aggregate_trade_list_from_json
+
 
 
 class Binance(Base):
@@ -31,13 +34,16 @@ class Binance(Base):
     DELETE_TRADE_ENDPOINT = "/api/v3/order" # DELETE (HMAC SHA256)
 
 
-
     # Returns false if the bot should stop requests
-
     def check_code(self, error_code):
         if error_code in [self.CODE_418, self.CODE_429]:
             return False
         return True
+
+    def get_base_response_time(self):
+        time_json = self.test_connectivity()
+        api_time = time_json["serverTime"]
+        return get_timestamp_millis() - api_time
 
     def test_connectivity(self):
         return self.do_get(self.build_url(self.GET_TIME_ENDPOINT), self.check_code)
@@ -54,7 +60,8 @@ class Binance(Base):
             print("Connected to Binance API.")
 
     def get_exchange_info(self):
-        return self.do_get(self.build_url(self.GET_EXCHANGE_INFO_ENDPOINT), self.check_code)
+        return get_exchange_info_from_json(self.do_get(self.build_url(self.GET_EXCHANGE_INFO_ENDPOINT),
+                                                       self.check_code))
 
     def get_depth(self, symbol, limit=100):
         parameters = self.craft_parameters(symbol=symbol, limit=limit)
@@ -65,21 +72,23 @@ class Binance(Base):
         parameters = self.craft_parameters(symbol=symbol, limit=limit)
         return self.do_get(self.build_url(self.GET_RECENT_TRADES_ENDPOINT), self.check_code, parameters)
 
-    def get_aggregate_trades(self, symbol, from_id=None, start_time=None, end_time=None, limit=500):
+    def get_aggregate_trades(self, symbol, from_id=None, start_time=None, end_time=None, limit=None):
         parameters = self.craft_parameters(symbol=symbol,
                                            fromId=from_id,
                                            startTime=start_time,
                                            endTime=end_time,
                                            limit=limit)
-        return self.do_get(self.build_url(self.GET_AGGREGATE_TRADES_ENDPOINT), self.check_code, parameters)
+        print(parameters)
+        return get_aggregate_trade_list_from_json(self.do_get(self.build_url(self.GET_AGGREGATE_TRADES_ENDPOINT),
+                                                              self.check_code, parameters))
 
-    def get_klines(self, symbol, interval, start_time=None, end_time=None, limit=500):
+    def get_klines(self, symbol, interval, start_time=None, end_time=None, limit=None):
         parameters = self.craft_parameters(symbol=symbol,
                                            interval=interval,
                                            startTime=start_time,
                                            endTime=end_time,
                                            limit=limit)
-        return [Kline(line) for line in self.do_get(self.build_url(self.GET_KLINES_ENDPOINT), self.check_code, parameters)]
+        return get_klines_from_json(self.do_get(self.build_url(self.GET_KLINES_ENDPOINT), self.check_code, parameters))
 
     def get_average_price(self, symbol):
         parameters = self.craft_parameters(symbol=symbol)
